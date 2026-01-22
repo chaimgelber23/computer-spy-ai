@@ -1,6 +1,6 @@
 "use client"
 
-import { useAuth } from '@/firebase/provider';
+import { useUser } from '@/firebase/provider';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -9,7 +9,7 @@ import { useState } from 'react';
 import { Label } from "@/components/ui/label";
 
 export default function SettingsPage() {
-    const { user } = useAuth();
+    const { user } = useUser();
     const [copied, setCopied] = useState(false);
 
     const handleCopy = () => {

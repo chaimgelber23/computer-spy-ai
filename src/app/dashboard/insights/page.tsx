@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useMemo, useEffect } from 'react';
-import { collection, query, orderBy, limit } from 'firebase/firestore';
-import { useFirestore } from '@/firebase/provider';
+import { collection, query, orderBy, limit, where } from 'firebase/firestore';
+import { useFirestore, useUser } from '@/firebase/provider';
 import { useCollection } from '@/firebase/firestore/use-collection';
 import { ActivityLog } from '@/lib/types';
 import { Button } from "@/components/ui/button"
@@ -16,40 +16,45 @@ import { DataMaturityTimeline } from '@/components/DataMaturityTimeline';
 
 export default function InsightsPage() {
     const firestore = useFirestore();
+    const { user } = useUser();
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [currentAnalysis, setCurrentAnalysis] = useState<any>(null);
     const [stats, setStats] = useState<any>(null);
 
     // Fetch stats on load
     useEffect(() => {
-        getDataStats().then(setStats);
-    }, []);
+        if (user?.uid) {
+            getDataStats(user.uid).then(setStats);
+        }
+    }, [user]);
 
     // Fetch historical insights
     const historyQuery = useMemo(() => {
-        if (!firestore) return null;
+        if (!firestore || !user) return null;
         return query(
             collection(firestore, 'weekly_insights'),
+            where('userId', '==', user.uid),
             orderBy('createdAt', 'desc'),
             limit(10)
         );
-    }, [firestore]);
+    }, [firestore, user]);
 
     const { data: history } = useCollection<any>(historyQuery);
 
     const handleAnalyze = async () => {
+        if (!user) return;
         setIsAnalyzing(true);
         try {
             // Trigger the API route
             const res = await fetch('/api/analyze/weekly', {
                 method: 'POST',
-                body: JSON.stringify({ userId: 'local-user' })
+                body: JSON.stringify({ userId: user.uid })
             });
             const json = await res.json();
             if (json.success) {
                 setCurrentAnalysis(json.data);
                 // Refresh stats
-                getDataStats().then(setStats);
+                getDataStats(user.uid).then(setStats);
             } else {
                 throw new Error(json.error);
             }

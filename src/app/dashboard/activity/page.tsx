@@ -1,8 +1,8 @@
 "use client"
 
 import { useMemo } from 'react';
-import { collection, query, orderBy, limit, Timestamp } from 'firebase/firestore';
-import { useFirestore } from '@/firebase/provider';
+import { collection, query, orderBy, limit, Timestamp, where } from 'firebase/firestore';
+import { useFirestore, useUser } from '@/firebase/provider';
 import { useCollection } from '@/firebase/firestore/use-collection';
 import { ActivityLog } from '@/lib/types';
 import {
@@ -21,14 +21,17 @@ import { format } from 'date-fns';
 export default function ActivityPage() {
     const firestore = useFirestore();
 
+    const { user } = useUser();
+
     const logsQuery = useMemo(() => {
-        if (!firestore) return null;
+        if (!firestore || !user) return null;
         return query(
             collection(firestore, 'activity_logs'),
+            where('userId', '==', user.uid),
             orderBy('timestamp', 'desc'),
             limit(50)
         );
-    }, [firestore]);
+    }, [firestore, user]);
 
     const { data: logs, isLoading } = useCollection<ActivityLog>(logsQuery);
 
