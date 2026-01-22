@@ -162,5 +162,37 @@ export interface ActivityLog {
   windowTitle: string;
   url?: string;
   durationSeconds: number;
+  grossDurationSeconds?: number;
+  idleSeconds?: number;
   platform?: string;
+  isCheckpoint?: boolean;
 }
+
+export interface WeeklyInsight {
+  id?: string;
+  createdAt: Timestamp;
+  periodStart: Timestamp;
+  periodEnd: Timestamp;
+  efficiencyScore: number;
+  summary: string;
+  repetitiveTasks: {
+    description: string;
+    frequency: string;
+    timeWasted: string;
+    suggestion: string;
+  }[];
+  totalActiveHours: number;
+  totalIdleHours: number;
+  topApps: { name: string; hours: number }[];
+}
+
+export interface DataStats {
+  totalLogs: number;
+  oldestLog: Timestamp | null;
+  newestLog: Timestamp | null;
+  totalActiveHours: number;
+  totalIdleHours: number;
+  daysOfData: number;
+  isReadyForAnalysis: boolean;
+}
+
