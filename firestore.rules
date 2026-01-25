@@ -1,20 +1,30 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Activity Logs: Read by user, Written by Admin SDK only
+    // Activity Logs: Users can read their own logs and write logs with their userId
     match /activity_logs/{logId} {
-      allow read: if request.auth != null;
-      allow write: if false; // Only allow Admin SDK
-    }
-    
-    // Default rule: specific to users
-    match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if false; // Logs are immutable
     }
 
-    // Catch-all for dev (secure later)
-    match /{document=**} {
-      allow read, write: if request.auth != null;
+    // Weekly Insights: Read by owner only, Written by Admin SDK only (server-side analysis)
+    match /weekly_insights/{insightId} {
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow write: if false; // Only Admin SDK can write
+    }
+
+    // Users: owner can read/update, admin can create
+    match /users/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow update: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null; // Allow during first login setup
+    }
+
+    // Agent heartbeats: Users can read/write their own heartbeat doc
+    match /agent_heartbeats/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null && request.auth.uid == userId;
     }
   }
 }

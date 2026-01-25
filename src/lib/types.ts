@@ -196,3 +196,34 @@ export interface DataStats {
   isReadyForAnalysis: boolean;
 }
 
+// Agent heartbeat for tracking desktop agent status
+export interface AgentHeartbeat {
+  id?: string;
+  userId: string;
+  lastSeen: Timestamp;
+  platform: string;
+  version?: string;
+  isActive: boolean;
+}
+
+// Analysis result from AI
+export interface AnalysisResult {
+  id?: string;
+  efficiencyScore: number;
+  summary: string;
+  repetitiveTasks: RepetitiveTask[];
+  topApps: AppUsage[];
+}
+
+export interface RepetitiveTask {
+  description: string;
+  frequency: string;
+  timeWasted: string;
+  suggestion: string;
+}
+
+export interface AppUsage {
+  name: string;
+  hours: number;
+}
+

@@ -2,29 +2,32 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { collection, query, orderBy, limit, where } from 'firebase/firestore';
-import { useFirestore, useUser } from '@/firebase/provider';
+import { useFirestore, useUser, useAuth } from '@/firebase/provider';
 import { useCollection } from '@/firebase/firestore/use-collection';
-import { ActivityLog } from '@/lib/types';
+import { WeeklyInsight, DataStats, AnalysisResult, RepetitiveTask, AppUsage } from '@/lib/types';
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, Sparkles, CheckCircle } from "lucide-react"
+import { Loader2, Sparkles, AlertCircle } from "lucide-react"
 import { getDataStats } from './stats-action';
 import { DataMaturityTimeline } from '@/components/DataMaturityTimeline';
+import { getIdToken } from 'firebase/auth';
 
 export default function InsightsPage() {
     const firestore = useFirestore();
+    const auth = useAuth();
     const { user } = useUser();
     const [isAnalyzing, setIsAnalyzing] = useState(false);
-    const [currentAnalysis, setCurrentAnalysis] = useState<any>(null);
-    const [stats, setStats] = useState<any>(null);
+    const [currentAnalysis, setCurrentAnalysis] = useState<AnalysisResult | null>(null);
+    const [stats, setStats] = useState<DataStats | null>(null);
+    const [error, setError] = useState<string | null>(null);
 
     // Fetch stats on load
     useEffect(() => {
         if (user?.uid) {
-            getDataStats(user.uid).then(setStats);
+            getDataStats(user.uid).then(setStats).catch(console.error);
         }
     }, [user]);
 
@@ -39,28 +42,43 @@ export default function InsightsPage() {
         );
     }, [firestore, user]);
 
-    const { data: history } = useCollection<any>(historyQuery);
+    const { data: history } = useCollection<WeeklyInsight>(historyQuery);
 
     const handleAnalyze = async () => {
         if (!user) return;
         setIsAnalyzing(true);
+        setError(null);
+
         try {
-            // Trigger the API route
+            // Get the user's ID token for authentication
+            const token = await getIdToken(user);
+
             const res = await fetch('/api/analyze/weekly', {
                 method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({ userId: user.uid })
             });
+
             const json = await res.json();
+
+            if (!res.ok) {
+                throw new Error(json.error || `Request failed with status ${res.status}`);
+            }
+
             if (json.success) {
                 setCurrentAnalysis(json.data);
                 // Refresh stats
-                getDataStats(user.uid).then(setStats);
+                getDataStats(user.uid).then(setStats).catch(console.error);
             } else {
-                throw new Error(json.error);
+                throw new Error(json.error || 'Analysis failed');
             }
-        } catch (e: any) {
-            console.error(e);
-            alert(`Analysis failed: ${e.message}`);
+        } catch (e: unknown) {
+            const errorMessage = e instanceof Error ? e.message : 'An unexpected error occurred';
+            console.error('Analysis error:', e);
+            setError(errorMessage);
         } finally {
             setIsAnalyzing(false);
         }
@@ -75,9 +93,9 @@ export default function InsightsPage() {
                 </div>
                 <Button
                     onClick={handleAnalyze}
-                    disabled={isAnalyzing || (stats && !stats.isReadyForAnalysis)}
+                    disabled={isAnalyzing || (stats !== null && !stats.isReadyForAnalysis)}
                     size="lg"
-                    className={stats && !stats.isReadyForAnalysis ? "opacity-50" : ""}
+                    className={stats !== null && !stats.isReadyForAnalysis ? "opacity-50" : ""}
                 >
                     {isAnalyzing ? (
                         <>
@@ -92,6 +110,15 @@ export default function InsightsPage() {
                     )}
                 </Button>
             </div>
+
+            {/* Error Alert */}
+            {error && (
+                <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Analysis Failed</AlertTitle>
+                    <AlertDescription>{error}</AlertDescription>
+                </Alert>
+            )}
 
             {/* Timeline */}
             {stats && (
@@ -143,7 +170,11 @@ export default function InsightsPage() {
     );
 }
 
-function InsightView({ analysis }: { analysis: any }) {
+interface InsightViewProps {
+    analysis: AnalysisResult;
+}
+
+function InsightView({ analysis }: InsightViewProps) {
     return (
         <div className="grid gap-6">
             {/* Efficiency Score */}
@@ -171,14 +202,14 @@ function InsightView({ analysis }: { analysis: any }) {
             </Card>
 
             {/* Top Apps */}
-            {analysis.topApps && (
+            {analysis.topApps && analysis.topApps.length > 0 && (
                 <Card>
                     <CardHeader>
                         <CardTitle>Top Applications</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-2">
-                            {analysis.topApps.map((app: any, i: number) => (
+                            {analysis.topApps.map((app: AppUsage, i: number) => (
                                 <div key={i} className="flex justify-between items-center text-sm">
                                     <span className="font-medium">{app.name}</span>
                                     <span className="text-muted-foreground">{app.hours.toFixed(1)} hrs</span>
@@ -190,28 +221,30 @@ function InsightView({ analysis }: { analysis: any }) {
             )}
 
             {/* Repetitive Tasks */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Repetitive Workflows Detected</CardTitle>
-                    <CardDescription>These tasks consume significant time and could be automated.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    {analysis.repetitiveTasks.map((task: any, idx: number) => (
-                        <Alert key={idx}>
-                            <AlertTitle className="flex justify-between items-center">
-                                <span>{task.description}</span>
-                                <span className="text-xs font-mono bg-muted px-2 py-1 rounded">
-                                    {task.timeWasted} wasted
-                                </span>
-                            </AlertTitle>
-                            <AlertDescription className="mt-2">
-                                <p className="mb-2"><strong>Suggestion:</strong> {task.suggestion}</p>
-                                <p className="text-xs text-muted-foreground mt-1">Frequency: {task.frequency}</p>
-                            </AlertDescription>
-                        </Alert>
-                    ))}
-                </CardContent>
-            </Card>
+            {analysis.repetitiveTasks && analysis.repetitiveTasks.length > 0 && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Repetitive Workflows Detected</CardTitle>
+                        <CardDescription>These tasks consume significant time and could be automated.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        {analysis.repetitiveTasks.map((task: RepetitiveTask, idx: number) => (
+                            <Alert key={idx}>
+                                <AlertTitle className="flex justify-between items-center">
+                                    <span>{task.description}</span>
+                                    <span className="text-xs font-mono bg-muted px-2 py-1 rounded">
+                                        {task.timeWasted} wasted
+                                    </span>
+                                </AlertTitle>
+                                <AlertDescription className="mt-2">
+                                    <p className="mb-2"><strong>Suggestion:</strong> {task.suggestion}</p>
+                                    <p className="text-xs text-muted-foreground mt-1">Frequency: {task.frequency}</p>
+                                </AlertDescription>
+                            </Alert>
+                        ))}
+                    </CardContent>
+                </Card>
+            )}
         </div>
     );
 }
