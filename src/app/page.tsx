@@ -32,12 +32,12 @@ export default function Home() {
                                 </p>
                             </div>
                             <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                                <Link href="/downloads/WorkflowSpy-Setup.exe">
+                                <a href="https://github.com/chaimgelber23/computer-spy-ai/releases/download/v1.0.0/Workflow.Spy.Setup.1.0.0.exe">
                                     <Button size="lg" className="h-12 px-8">
                                         <Download className="mr-2 h-4 w-4" />
                                         Download for Windows
                                     </Button>
-                                </Link>
+                                </a>
                                 <Button size="lg" variant="outline" className="h-12 px-8" disabled>
                                     <Download className="mr-2 h-4 w-4" />
                                     Mac (Coming Soon)
@@ -94,18 +94,16 @@ export default function Home() {
                                 personalized automation recommendations delivered straight to your inbox.
                             </p>
                             <div className="flex flex-col sm:flex-row gap-3 mt-4">
-                                <Link href="/downloads/WorkflowSpy-Setup.exe">
+                                <a href="https://github.com/chaimgelber23/computer-spy-ai/releases/download/v1.0.0/Workflow.Spy.Setup.1.0.0.exe">
                                     <Button size="lg">
                                         <Download className="mr-2 h-4 w-4" />
                                         Download for Windows
                                     </Button>
-                                </Link>
-                                <Link href="/downloads/WorkflowSpy.dmg">
-                                    <Button size="lg" variant="outline">
-                                        <Download className="mr-2 h-4 w-4" />
-                                        Download for Mac
-                                    </Button>
-                                </Link>
+                                </a>
+                                <Button size="lg" variant="outline" disabled>
+                                    <Download className="mr-2 h-4 w-4" />
+                                    Mac (Coming Soon)
+                                </Button>
                             </div>
                         </div>
                     </div>
