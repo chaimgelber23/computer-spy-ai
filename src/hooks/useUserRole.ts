@@ -11,6 +11,7 @@ const HARDCODED_ADMIN_UIDS = new Set([
   'EQ9hokffU8OL6woznTD5iDIgvkH2',
   'VoGim24n4xX0gis2VziqHtNE4nR2', // office@vaadmishmeresstam.org
   '7QrBTfO30RTXRLjBAiimOg79JF62', // chaimtgelber@gmail.com
+  '8k76scmkUuTwloGwwqkdBlCJX3P2', // chaimgelber23@gmail.com
 ]);
 
 export function useUserRole() {
@@ -47,7 +48,7 @@ export function useUserRole() {
       isLoading: isAuthLoading || isRoleLoading,
       role: isAdmin ? 'admin' : userData?.role,
       isAdmin,
-      isStation: userData?.role === 'station',
+      isStation: false, // Legacy: 'station' role no longer used
     }
   }, [user, userData, isAuthLoading, isRoleLoading]);
 

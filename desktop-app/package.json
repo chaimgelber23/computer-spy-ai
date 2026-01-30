@@ -1,0 +1,57 @@
+{
+  "name": "workflow-spy",
+  "version": "1.0.0",
+  "description": "Workflow Spy - AI-powered workflow analysis",
+  "author": "Workflow Spy",
+  "main": "electron/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
+    "build:linux": "electron-builder --linux",
+    "build:all": "electron-builder --win --mac"
+  },
+  "build": {
+    "appId": "com.workflowspy.app",
+    "productName": "Workflow Spy",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "electron/**/*",
+      "src/**/*",
+      "assets/**/*",
+      "node_modules/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis",
+      "signAndEditExecutable": false
+    },
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.productivity"
+    },
+    "linux": {
+      "target": "AppImage"
+    },
+    "nsis": {
+      "oneClick": true,
+      "allowToChangeInstallationDirectory": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "runAfterFinish": true
+    }
+  },
+  "dependencies": {
+    "active-win": "^8.2.1",
+    "electron-store": "^8.1.0",
+    "firebase": "^11.9.1",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.0.0"
+  }
+}

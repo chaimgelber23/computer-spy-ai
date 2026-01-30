@@ -17,6 +17,22 @@
       ]
     },
     {
+      "collectionGroup": "insights",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "insights",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "period", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "weekly_insights",
       "queryScope": "COLLECTION",
       "fields": [
@@ -30,6 +46,14 @@
       "fields": [
         { "fieldPath": "userId", "order": "ASCENDING" },
         { "fieldPath": "lastSeen", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "communication_logs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "date", "order": "DESCENDING" }
       ]
     }
   ],

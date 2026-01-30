@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { ArrowRight, Activity, Monitor, BrainCircuit, Zap } from "lucide-react"
+import { Activity, Monitor, BrainCircuit, Zap, Download, Mail } from "lucide-react"
 
 export default function Home() {
     return (
@@ -8,12 +8,12 @@ export default function Home() {
             <header className="px-6 lg:px-10 h-16 flex items-center border-b">
                 <Link href="/" className="flex items-center justify-center gap-2">
                     <Activity className="h-6 w-6 text-primary" />
-                    <span className="font-bold text-xl">Computer Spy AI</span>
+                    <span className="font-bold text-xl">Workflow Spy</span>
                 </Link>
                 <nav className="ml-auto flex gap-4 sm:gap-6">
                     <Link href="/login">
                         <Button variant="ghost" size="sm">
-                            Sign In
+                            Admin Sign In
                         </Button>
                     </Link>
                 </nav>
@@ -24,18 +24,24 @@ export default function Home() {
                         <div className="flex flex-col items-center space-y-4 text-center">
                             <div className="space-y-2">
                                 <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-6xl/none">
-                                    Unlock Your Workflow Potential
+                                    Discover What You Can Automate
                                 </h1>
                                 <p className="mx-auto max-w-[700px] text-gray-500 md:text-xl dark:text-gray-400">
-                                    AI-powered activity tracking that analyzes your work patterns and suggests automations to save you hours every week.
+                                    Download our lightweight desktop agent, enter your email, and we&apos;ll
+                                    analyze your workflow to find automation opportunities that save you hours every week.
                                 </p>
                             </div>
-                            <div className="space-x-4 pt-4">
-                                <Link href="/login">
+                            <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                                <Link href="/downloads/WorkflowSpy-Setup.exe">
                                     <Button size="lg" className="h-12 px-8">
-                                        Get Started <ArrowRight className="ml-2 h-4 w-4" />
+                                        <Download className="mr-2 h-4 w-4" />
+                                        Download for Windows
                                     </Button>
                                 </Link>
+                                <Button size="lg" variant="outline" className="h-12 px-8" disabled>
+                                    <Download className="mr-2 h-4 w-4" />
+                                    Mac (Coming Soon)
+                                </Button>
                             </div>
                         </div>
                     </div>
@@ -49,27 +55,27 @@ export default function Home() {
                                 <div className="flex h-14 w-14 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
                                     <Monitor className="h-7 w-7 text-blue-600 dark:text-blue-300" />
                                 </div>
-                                <h3 className="text-xl font-bold">1. Install the Agent</h3>
+                                <h3 className="text-xl font-bold">1. Download & Install</h3>
                                 <p className="text-gray-500 dark:text-gray-400">
-                                    Download and run the lightweight desktop agent. Sign in with your account credentials.
+                                    Download the desktop agent for Windows or Mac. Installation takes less than a minute.
                                 </p>
                             </div>
                             <div className="flex flex-col items-center space-y-4 text-center">
                                 <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
-                                    <Activity className="h-7 w-7 text-green-600 dark:text-green-300" />
+                                    <Mail className="h-7 w-7 text-green-600 dark:text-green-300" />
                                 </div>
-                                <h3 className="text-xl font-bold">2. Work Normally</h3>
+                                <h3 className="text-xl font-bold">2. Enter Your Email</h3>
                                 <p className="text-gray-500 dark:text-gray-400">
-                                    The agent quietly tracks which apps you use and how long you spend on each task.
+                                    Open the app, enter your email address, and we start monitoring your workflow patterns in the background.
                                 </p>
                             </div>
                             <div className="flex flex-col items-center space-y-4 text-center">
                                 <div className="flex h-14 w-14 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900">
                                     <BrainCircuit className="h-7 w-7 text-purple-600 dark:text-purple-300" />
                                 </div>
-                                <h3 className="text-xl font-bold">3. Get AI Insights</h3>
+                                <h3 className="text-xl font-bold">3. Get Your Report</h3>
                                 <p className="text-gray-500 dark:text-gray-400">
-                                    Our AI analyzes your patterns and suggests specific automations and workflows to boost productivity.
+                                    We&apos;ll email you personalized automation recommendations based on your actual work patterns at 3, 7, 14, and 21 days.
                                 </p>
                             </div>
                         </div>
@@ -84,19 +90,29 @@ export default function Home() {
                             </div>
                             <h2 className="text-3xl font-bold tracking-tighter">Ready to Save Time?</h2>
                             <p className="mx-auto max-w-[600px] text-gray-500 dark:text-gray-400">
-                                Join and discover which tasks you can automate to reclaim hours of your workweek.
+                                Download, enter your email, and we&apos;ll do the rest. You&apos;ll receive
+                                personalized automation recommendations delivered straight to your inbox.
                             </p>
-                            <Link href="/login">
-                                <Button size="lg" className="mt-4">
-                                    Sign In to Your Account
-                                </Button>
-                            </Link>
+                            <div className="flex flex-col sm:flex-row gap-3 mt-4">
+                                <Link href="/downloads/WorkflowSpy-Setup.exe">
+                                    <Button size="lg">
+                                        <Download className="mr-2 h-4 w-4" />
+                                        Download for Windows
+                                    </Button>
+                                </Link>
+                                <Link href="/downloads/WorkflowSpy.dmg">
+                                    <Button size="lg" variant="outline">
+                                        <Download className="mr-2 h-4 w-4" />
+                                        Download for Mac
+                                    </Button>
+                                </Link>
+                            </div>
                         </div>
                     </div>
                 </section>
             </main>
             <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t">
-                <p className="text-xs text-gray-500 dark:text-gray-400">© 2026 Computer Spy AI. All rights reserved.</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">© 2026 Workflow Spy. All rights reserved.</p>
                 <nav className="sm:ml-auto flex gap-4 sm:gap-6">
                     <Link className="text-xs hover:underline underline-offset-4" href="#">
                         Terms of Service

@@ -45,3 +45,13 @@ next-env.d.ts
 # firebase
 firebase-debug.log
 firebase-debug.log.*
+service-account.json
+
+# desktop app
+/desktop-app/node_modules
+/desktop-app/dist
+
+# download binaries (too large for git)
+/public/downloads/*.exe
+/public/downloads/*.dmg
+/public/downloads/*.AppImage

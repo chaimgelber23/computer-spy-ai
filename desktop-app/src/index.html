@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Workflow Spy</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      height: 100vh;
+      overflow: hidden;
+      user-select: none;
+    }
+    .container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      padding: 24px;
+    }
+
+    /* Setup Screen */
+    #setup-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      gap: 24px;
+    }
+    #setup-screen h1 {
+      font-size: 28px;
+      font-weight: 700;
+      color: #f8fafc;
+    }
+    #setup-screen p {
+      color: #94a3b8;
+      text-align: center;
+      line-height: 1.5;
+      max-width: 300px;
+    }
+    .input-group {
+      width: 100%;
+      max-width: 300px;
+    }
+    .input-group label {
+      display: block;
+      font-size: 13px;
+      color: #94a3b8;
+      margin-bottom: 6px;
+    }
+    .input-group input {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      background: #1e293b;
+      color: #f8fafc;
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .input-group input:focus {
+      border-color: #3b82f6;
+    }
+    .input-group .server-url {
+      font-size: 12px;
+      margin-top: 12px;
+    }
+    .input-group .server-url input {
+      font-size: 12px;
+      padding: 8px 10px;
+    }
+    .btn {
+      padding: 10px 24px;
+      border-radius: 8px;
+      border: none;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      width: 100%;
+      max-width: 300px;
+    }
+    .btn-primary {
+      background: #3b82f6;
+      color: white;
+    }
+    .btn-primary:hover { background: #2563eb; }
+    .btn-primary:disabled {
+      background: #475569;
+      cursor: not-allowed;
+    }
+    .error-msg {
+      color: #f87171;
+      font-size: 13px;
+      text-align: center;
+    }
+
+    /* Tracking Screen */
+    #tracking-screen {
+      display: none;
+      flex-direction: column;
+      height: 100%;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .header h2 {
+      font-size: 18px;
+      font-weight: 600;
+    }
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .status-badge.active {
+      background: #166534;
+      color: #4ade80;
+    }
+    .status-badge.paused {
+      background: #713f12;
+      color: #fbbf24;
+    }
+    .status-badge .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    .status-badge.active .dot { background: #4ade80; }
+    .status-badge.paused .dot { background: #fbbf24; }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .stat-card {
+      background: #1e293b;
+      border-radius: 10px;
+      padding: 14px;
+    }
+    .stat-card .label {
+      font-size: 11px;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .stat-card .value {
+      font-size: 24px;
+      font-weight: 700;
+      margin-top: 4px;
+      color: #f8fafc;
+    }
+
+    .current-activity {
+      background: #1e293b;
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 20px;
+      flex: 1;
+      overflow: hidden;
+    }
+    .current-activity .label {
+      font-size: 11px;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+    .current-activity .app-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: #3b82f6;
+    }
+    .current-activity .window-title {
+      font-size: 13px;
+      color: #94a3b8;
+      margin-top: 4px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+    }
+    .btn-secondary {
+      background: #334155;
+      color: #e2e8f0;
+      flex: 1;
+    }
+    .btn-secondary:hover { background: #475569; }
+    .btn-danger {
+      background: #7f1d1d;
+      color: #fca5a5;
+    }
+    .btn-danger:hover { background: #991b1b; }
+
+    .username-display {
+      text-align: center;
+      font-size: 13px;
+      color: #64748b;
+      margin-top: 12px;
+    }
+
+    .consent-text {
+      font-size: 11px;
+      color: #64748b;
+      text-align: center;
+      line-height: 1.4;
+      max-width: 300px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Setup Screen -->
+    <div id="setup-screen">
+      <h1>Workflow Spy</h1>
+      <p>Enter your email to get started. We'll analyze your workflow and email you personalized automation recommendations.</p>
+
+      <div class="input-group">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" placeholder="you@company.com" autocomplete="email" />
+
+        <div class="server-url">
+          <label for="server-url">Server URL</label>
+          <input type="url" id="server-url" placeholder="https://your-app.web.app" />
+        </div>
+      </div>
+
+      <div id="setup-error" class="error-msg" style="display:none;"></div>
+
+      <button class="btn btn-primary" id="btn-register" onclick="handleRegister()">
+        Get Started
+      </button>
+
+      <p class="consent-text">
+        We'll monitor your workflow for a few weeks and email you a personalized report showing what we can automate for you. You can pause or stop anytime.
+      </p>
+    </div>
+
+    <!-- Confirmation Screen (shown after registration) -->
+    <div id="confirmation-screen" style="display:none; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:20px; text-align:center;">
+      <div style="width:48px; height:48px; border-radius:50%; background:#166534; display:flex; align-items:center; justify-content:center; margin-bottom:8px;">
+        <svg width="24" height="24" fill="none" stroke="#4ade80" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+      </div>
+      <h2 style="font-size:24px; font-weight:700; color:#f8fafc;">You're All Set!</h2>
+      <p style="color:#94a3b8; max-width:280px; line-height:1.6;">
+        We're now monitoring your workflow in the background. You'll receive an email with personalized automation recommendations.
+      </p>
+      <div class="status-badge active" style="margin:8px 0;">
+        <span class="dot"></span>
+        <span>Monitoring Active</span>
+      </div>
+      <p style="color:#64748b; font-size:12px; max-width:260px;">
+        This app will continue running in your system tray. You can close this window.
+      </p>
+      <button class="btn btn-secondary" onclick="minimizeToTray()" style="max-width:200px; margin-top:8px;">
+        Minimize to Tray
+      </button>
+    </div>
+
+    <!-- Tracking Screen (shown when reopening from tray) -->
+    <div id="tracking-screen">
+      <div class="header">
+        <h2>Workflow Spy</h2>
+        <div class="status-badge active" id="status-badge">
+          <span class="dot"></span>
+          <span id="status-text">Tracking</span>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="label">Logs Today</div>
+          <div class="value" id="stat-logs">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Active Time</div>
+          <div class="value" id="stat-active">0m</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Idle Time</div>
+          <div class="value" id="stat-idle">0m</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Apps Used</div>
+          <div class="value" id="stat-apps">0</div>
+        </div>
+      </div>
+
+      <div class="current-activity">
+        <div class="label">Current Activity</div>
+        <div class="app-name" id="current-app">Waiting...</div>
+        <div class="window-title" id="current-title">Starting tracker...</div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-secondary" id="btn-pause" onclick="toggleTracking()">
+          Pause
+        </button>
+        <button class="btn btn-secondary" onclick="minimizeToTray()">
+          Minimize
+        </button>
+      </div>
+
+      <div class="username-display" id="username-display"></div>
+    </div>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
