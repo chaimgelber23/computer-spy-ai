@@ -1,15 +1,8 @@
 'use server';
 
 import { ActivityLog, DataStats } from '@/lib/types';
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
-import { getFirestore, Timestamp } from 'firebase-admin/firestore';
-
-function getAdminDb() {
-    if (getApps().length === 0) {
-        initializeApp();
-    }
-    return getFirestore();
-}
+import { Timestamp } from 'firebase-admin/firestore';
+import { getAdminDb } from '@/lib/firebase-admin';
 
 export async function getDataStats(userId: string = 'local-user'): Promise<DataStats> {
     const db = getAdminDb();

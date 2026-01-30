@@ -1,16 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { runAndSaveWeeklyAnalysis } from '@/ai/weeklyAnalysis';
-import { getAuth } from 'firebase-admin/auth';
-import { initializeApp, getApps } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
-
-// Initialize Firebase Admin if not already done
-function getAdminApp() {
-    if (getApps().length === 0) {
-        initializeApp();
-    }
-    return getApps()[0];
-}
+import { getAdminAuth } from '@/lib/firebase-admin';
 
 // Simple in-memory rate limiter for scalability
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
@@ -36,8 +26,6 @@ function checkRateLimit(userId: string): { allowed: boolean; remaining: number }
 
 export async function POST(request: NextRequest) {
     try {
-        getAdminApp();
-
         // Verify authentication
         const authHeader = request.headers.get('Authorization');
         if (!authHeader?.startsWith('Bearer ')) {
@@ -51,10 +39,12 @@ export async function POST(request: NextRequest) {
         let userId: string;
 
         try {
-            const decodedToken = await getAuth().verifyIdToken(token);
+            const auth = getAdminAuth();
+            const decodedToken = await auth.verifyIdToken(token);
             userId = decodedToken.uid;
-        } catch (authError: any) {
-            console.error('Token verification failed:', authError.message);
+        } catch (authError: unknown) {
+            const msg = authError instanceof Error ? authError.message : 'Auth failed';
+            console.error('Token verification failed:', msg);
             return NextResponse.json(
                 { success: false, error: 'Invalid or expired token. Please log in again.' },
                 { status: 401 }

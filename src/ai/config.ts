@@ -1,7 +1,14 @@
-import { genkit } from 'genkit';
-import { googleAI } from '@genkit-ai/google-genai';
+import type { Genkit } from 'genkit';
 
-export const ai = genkit({
-    plugins: [googleAI()],
-    model: 'gemini-1.5-flash',
-});
+let _ai: Genkit | null = null;
+
+export async function getAI(): Promise<Genkit> {
+    if (_ai) return _ai;
+    const { genkit } = await import('genkit');
+    const { googleAI } = await import('@genkit-ai/google-genai');
+    _ai = genkit({
+        plugins: [googleAI()],
+        model: 'gemini-1.5-flash',
+    });
+    return _ai;
+}

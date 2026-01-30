@@ -1,37 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAuth } from 'firebase-admin/auth';
-import { getFirestore, Timestamp } from 'firebase-admin/firestore';
-import { initializeApp, getApps } from 'firebase-admin/app';
+import { Timestamp } from 'firebase-admin/firestore';
+import { getAdminDb, getAdminAuth } from '@/lib/firebase-admin';
 import { randomUUID } from 'crypto';
-
-function getAdminApp() {
-  if (getApps().length === 0) {
-    initializeApp();
-  }
-  return getApps()[0];
-}
 
 /**
  * POST /api/register
  * Register a new user with just an email (no password).
  * Returns a device key for authentication.
- *
- * Body: {
- *   email: string,
- *   platform: string  // 'win32' | 'darwin' | 'linux'
- * }
- *
- * Response: {
- *   deviceKey: string,   // UUID to store locally for future auth
- *   userId: string,      // Firebase UID
- *   customToken: string  // Firebase custom token for initial sign-in
- *   email: string
- * }
  */
 export async function POST(request: NextRequest) {
   try {
-    getAdminApp();
-
     const body = await request.json();
     const { email, platform } = body as { email: string; platform: string };
 
@@ -44,7 +22,7 @@ export async function POST(request: NextRequest) {
     }
 
     const cleanEmail = email.trim().toLowerCase();
-    const db = getFirestore();
+    const db = getAdminDb();
 
     // Check if email is already registered
     const existingUsers = await db.collection('users')
@@ -63,7 +41,7 @@ export async function POST(request: NextRequest) {
     const deviceKey = randomUUID();
 
     // Create a Firebase auth user with email
-    const auth = getAuth();
+    const auth = getAdminAuth();
     const userRecord = await auth.createUser({
       email: cleanEmail,
       displayName: cleanEmail.split('@')[0],
@@ -100,13 +78,11 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * POST /api/register/login
+ * PUT /api/register
  * Re-authenticate with a device key (for returning users).
  */
 export async function PUT(request: NextRequest) {
   try {
-    getAdminApp();
-
     const body = await request.json();
     const { deviceKey } = body as { deviceKey: string };
 
@@ -117,7 +93,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const db = getFirestore();
+    const db = getAdminDb();
 
     // Find user by device key
     const usersSnapshot = await db.collection('users')
@@ -136,7 +112,7 @@ export async function PUT(request: NextRequest) {
     const userData = userDoc.data();
 
     // Generate new custom token
-    const auth = getAuth();
+    const auth = getAdminAuth();
     const customToken = await auth.createCustomToken(userDoc.id);
 
     // Update last seen

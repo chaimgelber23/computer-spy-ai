@@ -1,18 +1,11 @@
 'use server';
 
-import { initializeApp, getApps } from 'firebase-admin/app';
-import { getFirestore, Timestamp as AdminTimestamp } from 'firebase-admin/firestore';
+import { Timestamp as AdminTimestamp } from 'firebase-admin/firestore';
+import { getAdminDb } from '@/lib/firebase-admin';
 import { getAIProvider } from './providers';
 import { compressActivityLogs } from './compression';
 import type { AIProviderName, AnalysisPeriod, AnalysisResult } from './providers/types';
 import { PERIOD_CONFIGS } from './providers/types';
-
-function getAdminDb() {
-  if (getApps().length === 0) {
-    initializeApp();
-  }
-  return getFirestore();
-}
 
 export interface RunAnalysisOptions {
   userId: string;
@@ -98,7 +91,7 @@ export async function runAnalysis(options: RunAnalysisOptions): Promise<SavedIns
   const compressedData = compressActivityLogs(rawLogs, config.days, config.label);
 
   // Run AI analysis
-  const provider = getAIProvider(providerName);
+  const provider = await getAIProvider(providerName);
   const analysis = await provider.analyze(compressedData, period);
 
   // Save the insight

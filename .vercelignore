@@ -1,0 +1,9 @@
+desktop-app/
+functions/
+public/downloads/*.exe
+public/downloads/*.dmg
+public/downloads/*.AppImage
+firebase-debug.*
+*.log
+IMPLEMENTATION_PLAN.md
+nul

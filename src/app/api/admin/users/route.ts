@@ -1,29 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAuth } from 'firebase-admin/auth';
-import { getFirestore } from 'firebase-admin/firestore';
-import { initializeApp, getApps } from 'firebase-admin/app';
+import { getAdminDb, verifyAdmin } from '@/lib/firebase-admin';
 import { getUserAnalysisProgress } from '@/ai/analysis';
-
-function getAdminApp() {
-  if (getApps().length === 0) {
-    initializeApp();
-  }
-  return getApps()[0];
-}
-
-async function verifyAdmin(token: string): Promise<string> {
-  getAdminApp();
-  const decodedToken = await getAuth().verifyIdToken(token);
-  const uid = decodedToken.uid;
-  const db = getFirestore();
-  const userDoc = await db.collection('users').doc(uid).get();
-  const userData = userDoc.data();
-  const adminUids = (process.env.ADMIN_UIDS || '').split(',').map(s => s.trim());
-  if (userData?.role !== 'admin' && !adminUids.includes(uid)) {
-    throw new Error('Admin access required');
-  }
-  return uid;
-}
 
 /**
  * GET /api/admin/users
@@ -42,7 +19,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
-    const db = getFirestore();
+    const db = getAdminDb();
 
     // Get all users
     const usersSnapshot = await db.collection('users')

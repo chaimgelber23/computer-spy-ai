@@ -1,28 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAuth } from 'firebase-admin/auth';
-import { getFirestore, Timestamp } from 'firebase-admin/firestore';
-import { initializeApp, getApps } from 'firebase-admin/app';
-
-function getAdminApp() {
-  if (getApps().length === 0) {
-    initializeApp();
-  }
-  return getApps()[0];
-}
-
-async function verifyAdmin(token: string): Promise<string> {
-  getAdminApp();
-  const decodedToken = await getAuth().verifyIdToken(token);
-  const uid = decodedToken.uid;
-  const db = getFirestore();
-  const userDoc = await db.collection('users').doc(uid).get();
-  const userData = userDoc.data();
-  const adminUids = (process.env.ADMIN_UIDS || '').split(',').map(s => s.trim());
-  if (userData?.role !== 'admin' && !adminUids.includes(uid)) {
-    throw new Error('Admin access required');
-  }
-  return uid;
-}
+import { Timestamp } from 'firebase-admin/firestore';
+import { getAdminDb, verifyAdmin } from '@/lib/firebase-admin';
 
 /**
  * GET /api/admin/users/[userId]/communications
@@ -45,7 +23,7 @@ export async function GET(
     }
 
     const { userId } = await params;
-    const db = getFirestore();
+    const db = getAdminDb();
 
     const snapshot = await db.collection('communication_logs')
       .where('userId', '==', userId)
@@ -100,7 +78,7 @@ export async function POST(
       );
     }
 
-    const db = getFirestore();
+    const db = getAdminDb();
 
     const commLog = {
       userId,

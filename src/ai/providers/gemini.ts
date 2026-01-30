@@ -1,4 +1,4 @@
-import { ai } from '../config';
+import { getAI } from '../config';
 import type { AIProvider, CompressedActivityData, AnalysisPeriod, AnalysisResult } from './types';
 import { buildAnalysisPrompt } from './types';
 import { z } from 'zod';
@@ -28,6 +28,7 @@ export class GeminiProvider implements AIProvider {
   name = 'gemini' as const;
 
   async analyze(data: CompressedActivityData, period: AnalysisPeriod): Promise<AnalysisResult> {
+    const ai = await getAI();
     const prompt = buildAnalysisPrompt(data, period);
 
     const result = await ai.generate({

@@ -1,16 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { runAnalysis } from '@/ai/analysis';
-import { getAuth } from 'firebase-admin/auth';
-import { getFirestore } from 'firebase-admin/firestore';
-import { initializeApp, getApps } from 'firebase-admin/app';
+import { verifyAdmin } from '@/lib/firebase-admin';
 import type { AIProviderName, AnalysisPeriod } from '@/ai/providers/types';
-
-function getAdminApp() {
-  if (getApps().length === 0) {
-    initializeApp();
-  }
-  return getApps()[0];
-}
 
 // Rate limiter
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
@@ -32,25 +23,6 @@ function checkRateLimit(key: string): { allowed: boolean; remaining: number } {
 
   limit.count++;
   return { allowed: true, remaining: RATE_LIMIT_MAX - limit.count };
-}
-
-async function verifyAdmin(token: string): Promise<string> {
-  getAdminApp();
-  const decodedToken = await getAuth().verifyIdToken(token);
-  const uid = decodedToken.uid;
-
-  // Check admin role
-  const db = getFirestore();
-  const userDoc = await db.collection('users').doc(uid).get();
-  const userData = userDoc.data();
-
-  const adminUids = (process.env.ADMIN_UIDS || '').split(',').map(s => s.trim());
-
-  if (userData?.role !== 'admin' && !adminUids.includes(uid)) {
-    throw new Error('Admin access required');
-  }
-
-  return uid;
 }
 
 /**

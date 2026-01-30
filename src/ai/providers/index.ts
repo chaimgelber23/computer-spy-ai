@@ -1,27 +1,30 @@
 import type { AIProvider, AIProviderName } from './types';
-import { ClaudeProvider } from './claude';
-import { OpenAIProvider } from './openai';
-import { GeminiProvider } from './gemini';
 
 // Cache provider instances
 const providerCache = new Map<AIProviderName, AIProvider>();
 
-export function getAIProvider(name: AIProviderName): AIProvider {
+export async function getAIProvider(name: AIProviderName): Promise<AIProvider> {
   const cached = providerCache.get(name);
   if (cached) return cached;
 
   let provider: AIProvider;
 
   switch (name) {
-    case 'claude':
+    case 'claude': {
+      const { ClaudeProvider } = await import('./claude');
       provider = new ClaudeProvider();
       break;
-    case 'openai':
+    }
+    case 'openai': {
+      const { OpenAIProvider } = await import('./openai');
       provider = new OpenAIProvider();
       break;
-    case 'gemini':
+    }
+    case 'gemini': {
+      const { GeminiProvider } = await import('./gemini');
       provider = new GeminiProvider();
       break;
+    }
     default:
       throw new Error(`Unknown AI provider: ${name}`);
   }

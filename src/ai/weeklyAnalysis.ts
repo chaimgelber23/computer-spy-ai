@@ -1,18 +1,9 @@
 'use server';
 
 import { z } from 'zod';
-import { ai } from './config';
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
-import { getFirestore, Timestamp as AdminTimestamp } from 'firebase-admin/firestore';
-
-// Initialize Admin SDK if not already done
-function getAdminDb() {
-    if (getApps().length === 0) {
-        // In production, this uses GOOGLE_APPLICATION_CREDENTIALS
-        initializeApp();
-    }
-    return getFirestore();
-}
+import { getAI } from './config';
+import { Timestamp as AdminTimestamp } from 'firebase-admin/firestore';
+import { getAdminDb } from '@/lib/firebase-admin';
 
 const AnalysisResultSchema = z.object({
     repetitiveTasks: z.array(z.object({
@@ -29,68 +20,59 @@ const AnalysisResultSchema = z.object({
     })).optional()
 });
 
-export const weeklyAnalysisFlow = ai.defineFlow(
-    {
-        name: 'weeklyActivityAnalysis',
-        inputSchema: z.object({
-            userId: z.string().default('local-user'),
-            daysBack: z.number().default(7)
-        }),
-        outputSchema: AnalysisResultSchema,
-    },
-    async (input) => {
-        const db = getAdminDb();
+async function weeklyAnalysisFlow(input: { userId: string; daysBack: number }) {
+    const db = getAdminDb();
 
-        // Calculate date range
-        const endDate = new Date();
-        const startDate = new Date();
-        startDate.setDate(startDate.getDate() - input.daysBack);
+    // Calculate date range
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - input.daysBack);
 
-        // Query logs from past week
-        const logsSnapshot = await db.collection('activity_logs')
-            .where('userId', '==', input.userId)
-            .where('timestamp', '>=', AdminTimestamp.fromDate(startDate))
-            .where('timestamp', '<=', AdminTimestamp.fromDate(endDate))
-            .orderBy('timestamp', 'desc')
-            .limit(500)
-            .get();
+    // Query logs from past week
+    const logsSnapshot = await db.collection('activity_logs')
+        .where('userId', '==', input.userId)
+        .where('timestamp', '>=', AdminTimestamp.fromDate(startDate))
+        .where('timestamp', '<=', AdminTimestamp.fromDate(endDate))
+        .orderBy('timestamp', 'desc')
+        .limit(500)
+        .get();
 
-        if (logsSnapshot.empty) {
-            return {
-                repetitiveTasks: [],
-                efficiencyScore: 0,
-                summary: "No activity data found for the past week. Keep the desktop agent running to collect data.",
-                topApps: []
-            };
-        }
+    if (logsSnapshot.empty) {
+        return {
+            repetitiveTasks: [],
+            efficiencyScore: 0,
+            summary: "No activity data found for the past week. Keep the desktop agent running to collect data.",
+            topApps: []
+        };
+    }
 
-        const logs = logsSnapshot.docs.map(doc => {
-            const data = doc.data();
-            return {
-                app: data.appName,
-                title: data.windowTitle,
-                duration: data.durationSeconds,
-                idleTime: data.idleSeconds || 0
-            };
-        });
+    const logs = logsSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+            app: data.appName,
+            title: data.windowTitle,
+            duration: data.durationSeconds,
+            idleTime: data.idleSeconds || 0
+        };
+    });
 
-        // Aggregate by app for summary
-        const appTotals: Record<string, number> = {};
-        let totalActive = 0;
-        let totalIdle = 0;
+    // Aggregate by app for summary
+    const appTotals: Record<string, number> = {};
+    let totalActive = 0;
+    let totalIdle = 0;
 
-        logs.forEach(log => {
-            appTotals[log.app] = (appTotals[log.app] || 0) + log.duration;
-            totalActive += log.duration;
-            totalIdle += log.idleTime;
-        });
+    logs.forEach(log => {
+        appTotals[log.app] = (appTotals[log.app] || 0) + log.duration;
+        totalActive += log.duration;
+        totalIdle += log.idleTime;
+    });
 
-        const topApps = Object.entries(appTotals)
-            .sort(([, a], [, b]) => b - a)
-            .slice(0, 10)
-            .map(([name, seconds]) => ({ name, hours: seconds / 3600 }));
+    const topApps = Object.entries(appTotals)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 10)
+        .map(([name, seconds]) => ({ name, hours: seconds / 3600 }));
 
-        const prompt = `
+    const prompt = `
 You are analyzing a user's computer activity to identify workflow inefficiencies and suggest automation opportunities.
 
 Activity Summary (${input.daysBack} days):
@@ -113,21 +95,21 @@ Based on this data:
 Be specific and practical. Focus on patterns that suggest automation opportunities.
 `;
 
-        const result = await ai.generate({
-            prompt: prompt,
-            output: { schema: AnalysisResultSchema },
-        });
+    const ai = await getAI();
+    const result = await ai.generate({
+        prompt: prompt,
+        output: { schema: AnalysisResultSchema },
+    });
 
-        if (result.output) {
-            return {
-                ...result.output,
-                topApps
-            };
-        } else {
-            throw new Error("Failed to generate analysis");
-        }
+    if (result.output) {
+        return {
+            ...result.output,
+            topApps
+        };
+    } else {
+        throw new Error("Failed to generate analysis");
     }
-);
+}
 
 // Function to run weekly analysis and save results
 export async function runAndSaveWeeklyAnalysis(userId: string = 'local-user') {
@@ -151,7 +133,7 @@ export async function runAndSaveWeeklyAnalysis(userId: string = 'local-user') {
         repetitiveTasks: result.repetitiveTasks,
         topApps: result.topApps || [],
         totalActiveHours,
-        totalIdleHours: 0, // Would need to sum from logs
+        totalIdleHours: 0,
         userId
     };
 
